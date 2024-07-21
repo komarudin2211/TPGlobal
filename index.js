@@ -3,8 +3,11 @@ var axios = require("axios");
 var path = require("path");
 const express = require('express')
 const app = express()
-const port = 3000 ||  process.env.PORT ;
-const { Builder } = require('xml2js'); 
+const port = process.env.PORT || 3001;
+const { Builder } = require('xml2js');
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.json());
 
 var reqConnet = false
@@ -55,13 +58,17 @@ var getProduct = async (category) => {
  
      try {
         var dataExist = [];
-        var query = {};
-
-        if(category && category != 'All'){
-            query = {name:category};
+        if(typeof category == 'string'){
+            if(category && category != 'All'){
+                category = {name:category};
+            }else{
+                category = {}
+            }
         }
 
-        dataExist = await db.collection("products").find(query).toArray((err, items) => items);
+        console.log("final query => ",category);
+       
+        dataExist = await db.collection("products").find(category).toArray((err, items) => items);
 
         return dataExist;
  
@@ -71,6 +78,7 @@ var getProduct = async (category) => {
      }
  
  }
+ 
 
  if(reqConnet == false) {
     defaultData().then(() => {
@@ -79,8 +87,9 @@ var getProduct = async (category) => {
 
         app.get('/', async (req, res) => {
             var category = req.query.category;
-            var allData = await getProduct();
+            var allData = await getProduct("");
             var data = await getProduct(category);
+
             res.render("index", {data:data, allData:allData});
         })
 
@@ -126,10 +135,38 @@ var getProduct = async (category) => {
                 res.status(500).json({ error: 'Error converting JSON to XML' });
             }
         });
+
+        app.get('/detail/:categoryId/:productId', async (req, res) => {
+            var allData = await getProduct("");
+            var query = {
+                id:parseInt(req.params.categoryId)
+            }
+
+            var data = await getProduct(query);
+            
+            res.render("detail", {data:data[0], id:req.params.productId});
+        });
+
+        app.post('/edit/:categoryId/:productId', async (req, res) => {
+            for(var key in req.body) {
+                console.log(req.body[key])
+            }
+            
+            var allData = await getProduct("");
+            var query = {
+                id:parseInt(req.params.categoryId)
+            }
+
+            var data = await getProduct(query);
+            
+            res.render("detail", {data:data[0], id:req.params.productId});
+        });
+    
     
         app.listen(port, () => {
-        console.log(`app listening on port ${port}`)
-        })
+            console.log(`app listening on port ${port}`)
+        });
+
     }).catch((err) => {
         reqConnet = false
         console.log("connect db failed", err);

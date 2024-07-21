@@ -1,0 +1,74 @@
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+
+</head>
+<body>
+    <a href="/">Home</a>
+    <form id="myForm">
+        <table>
+        <% Object.keys(data).forEach(function(prop) { %>
+            <% if(prop != 'products' && prop != '_id' && prop != 'id') { %>
+                <tr>
+                    <td><label><%= prop %></label></td>
+                    
+                    <td><input type="text" name="<%= prop %>" value="<%= data[prop] %>"> </td>
+                </tr>
+            <%}%>
+            <% if(prop == 'products') { %>
+                <% data.products.forEach(function(item) { %>
+                    <% Object.keys(item).forEach(function(propChild) { %>
+                        <% if(item.id == id) { %>
+                            <% if(typeof item[propChild] == 'object') { %>
+                                <% Object.keys(item[propChild]).forEach(function(prp) { %>
+                                    <tr>
+                                        <td><label><%= prop %> <%= propChild %> <%= prp %> </label></td>
+                                        <td><input type="text" name="<%= prop+'-'+propChild+'-'+prp %>" value="<%= item[propChild][prp] %>"> </td>
+                                    </tr>
+                                <%})%>
+                            <%} else{%>
+                                <tr>
+                                    <td><label><%= prop %> <%= propChild %> </label></td>
+                                    <td><input type="text" name="<%= prop+'-'+propChild %>" value="<%= item[propChild] %>"> </td>
+                                </tr>
+                            <%}%>
+                        <%}%>
+                    <%})%>
+                <%})%>
+            <%}%>
+        <%})%>
+        </table>
+        <input type="submit" value="Edit">
+    </form>
+    <script>
+        $(document).ready(function() {
+           var arrUrl = window.location.href.split("/");
+           var categoryId = arrUrl[arrUrl.length - 2];
+           var productId = arrUrl[arrUrl.length - 1]
+
+            $('#myForm').on('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                var formData = $(this).serialize();
+
+                console.log(" <= formData => ", formData)
+
+                $.ajax({
+                    url: '/edit/'+categoryId+'/'+productId,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $('#response').html('<p>Form submitted successfully!</p>');
+                        $('#myForm').trigger('reset'); // Reset form fields
+                    },
+                    error: function(xhr, status, error) {
+                        $('#response').html('<p>An error occurred: ' + error + '</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

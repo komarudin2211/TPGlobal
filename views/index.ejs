@@ -36,7 +36,7 @@
                     <td><%= product.title %></td>
                     <td> <%= product.price.price %></td>
                     <td><%= product.stock.stock %></td>
-                    <td><a href="#">Add</a> | <a href="#">Edit</a></td>
+                    <td><a href="/detail/<%= category.id %>/<%= product.id %>">Edit</a></td>
                    </tr>
                 <% }); %>
             </table>
