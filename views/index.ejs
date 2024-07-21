@@ -1,0 +1,122 @@
+
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+
+</head>
+<body>
+    <div>
+    Filter: <select id="select">
+        <option value="All">All</option>
+        <% allData.forEach(function(category){ %>
+        <option value=<%= category.name %>><%= category.name %></option>
+        <% }); %>
+    </select>
+    </div>
+  
+
+    <div>
+        <% data.forEach(function(category){ %>
+        <div>
+            <br/>
+            <%= category.name %> 
+            <button class="xmlBtn" onclick="downloadXmlFromUrl('<%= category.name %>')" data-name=xml-<%= category.name %>>XML</button> 
+            <button class="xlsxBtn" data-name=xlsx-<%= category.name %>>XLSX</button>
+            <table border="1" id=<%= category.name %>>
+                <tr>
+                    <td>Title</td>
+                    <td> Harga</td>
+                    <td>Jumlah</td>
+                    <td>Action</td>
+                </tr>
+                <% category.products.forEach(function(product){ %>
+                   <tr>
+                    <td><%= product.title %></td>
+                    <td> <%= product.price.price %></td>
+                    <td><%= product.stock.stock %></td>
+                    <td><a href="#">Add</a> | <a href="#">Edit</a></td>
+                   </tr>
+                <% }); %>
+            </table>
+            <br/>
+            <br/>
+        </div>
+    <% }); %>
+    </div>
+      
+    <% if (data.length  == 0) { %>
+
+    <div style="margin-top: 20px;" >Data Kosong</div>
+    <% } %>
+    <script>
+        function downloadXmlFromUrl(category) {
+            const url = '/xml?category='+category;
+            const fileName = category+'-file.xml';
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('GET', url, true);
+
+            xhr.responseType = 'text'; // The type of response we expect
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Get the XML content
+                    const xmlContent = xhr.responseText;
+
+                    // Create a Blob with the XML content
+                    const blob = new Blob([xmlContent], { type: 'application/xml' });
+
+                    // Create an object URL for the Blob
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileName;
+
+                    // Append the link to the body (not visible)
+                    document.body.appendChild(link);
+
+                    // Programmatically click the link to trigger the download
+                    link.click();
+
+                    // Clean up by removing the link element and revoking the object URL
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                } else {
+                    console.error('Error downloading XML:', xhr.statusText);
+                }
+            };
+
+            xhr.onerror = function () {
+                console.error('Network error occurred while downloading XML.');
+            };
+
+            xhr.send();
+        }
+
+   
+        $(document).ready(function() {
+            $('.xlsxBtn').click(function(e) {
+                var attr = $(e.target).attr("data-name");
+                var arr = attr.split("-");
+                var idTble = arr[1]
+                console.log("eattar => ", arr[1]);
+                var wb = XLSX.utils.table_to_book(document.getElementById(idTble));
+                XLSX.writeFile(wb, idTble+'.xlsx');
+            });
+
+
+            $("#select").change(() => {
+                window.location.search = "category="+$("#select").val();
+            });
+
+            if(window.location.search){
+                var arr = window.location.search;
+                var category = arr.split("=");
+                $("#select").val(category).change(category[1]);
+            }
+
+           
+        });
+    </script>
+</body>
