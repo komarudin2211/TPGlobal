@@ -3,7 +3,7 @@ var axios = require("axios");
 var path = require("path");
 const express = require('express')
 const app = express()
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 const { Builder } = require('xml2js');
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -151,7 +151,7 @@ var getProduct = async (category) => {
             for(var key in req.body) {
                 console.log(req.body[key])
             }
-            
+
             var allData = await getProduct("");
             var query = {
                 id:parseInt(req.params.categoryId)
