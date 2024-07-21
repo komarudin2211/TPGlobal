@@ -53,10 +53,10 @@ var defaultData = async () => {
 
 var getProduct = async (category) => {
     var client =  await connect.run();
-     await client.connect();
-     var db = client.db("TPGlobal");
+    await client.connect();
+    var db = client.db("TPGlobal");
  
-     try {
+    try {
         var dataExist = [];
         if(typeof category == 'string'){
             if(category && category != 'All'){
@@ -65,21 +65,18 @@ var getProduct = async (category) => {
                 category = {}
             }
         }
-
-        console.log("final query => ",category);
        
         dataExist = await db.collection("products").find(category).toArray((err, items) => items);
 
         return dataExist;
  
-     }catch(err) {
-         console.log(err)
-         console.log("server error = >", err.response.data.message);
+    }catch(err) {
+        console.log(err)
+        console.log("server error = >", err.response.data.message);
      }
  
  }
  
-
  if(reqConnet == false) {
     defaultData().then(() => {
         reqConnet = false
@@ -148,18 +145,67 @@ var getProduct = async (category) => {
         });
 
         app.post('/edit/:categoryId/:productId', async (req, res) => {
-            for(var key in req.body) {
-                console.log(req.body[key])
-            }
+            try {
+                var newObj = {};
 
-            var allData = await getProduct("");
-            var query = {
-                id:parseInt(req.params.categoryId)
-            }
+                for(var key in req.body) {
+                    var arr = key.split("-");
 
-            var data = await getProduct(query);
+                    if(arr.length == 2){
+                        if(!newObj[arr[0]]) {
+                            newObj[arr[0]] = {};
+                        }
+
+                        newObj[arr[0]][arr[1]] = (!isNaN(parseInt(req.body[key])) && key != 'created_at' && key !=  'updated_at') ? parseInt(req.body[key]) : req.body[key];
+                    }else{
+                        newObj[key] = (!isNaN(parseInt(req.body[key])) && key != 'created_at' && key !=  'updated_at') ?  parseInt(req.body[key]) : req.body[key] ;
+                    }
+                }
+
+                var query = {
+                    id:parseInt(req.params.categoryId)
+                }
+
+                var productId = req.params.productId;
+
+                var data = await getProduct(query);
+                var newProducts = []
+
+                for(let i = 0; i < data[0].products.length; i++){
+                    if(data[0].products[i].id == parseInt(productId)){
+                        for(var key in data[0].products[i]){
+                            if(typeof newObj[key] == 'object'){
+                                if(JSON.stringify(newObj[key]) != JSON.stringify(data[0].products[i][key])) {
+                                    console.log(" obj ", newObj[key], data[0].products[i][key])
+                                }
+                            }else{
+                                if(newObj[key] != data[0].products[i][key] && typeof newObj[key] != 'undefined') {
+                                    data[0].products[i][key] = newObj[key]
+                                }
+                            }
+                        }
+                    }
+                    newProducts.push(data[0].products[i]);
+                }
+
+                var client =  await connect.run();
+                await client.connect();
+                var db = client.db("TPGlobal");
+          
+                var dataUpdateRes  = await db.collection("products").updateOne({
+                    id:parseInt(req.params.categoryId)
+                }, { 
+                    $set: {
+                        products:newProducts
+                    } 
+                });
+                
+                res.status(200).json({});
+            }catch(err){
+
+                res.status(500).json({...err});
+            }
             
-            res.render("detail", {data:data[0], id:req.params.productId});
         });
     
     
