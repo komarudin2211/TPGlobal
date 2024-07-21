@@ -176,7 +176,7 @@ var getProduct = async (category) => {
                         for(var key in data[0].products[i]){
                             if(typeof newObj[key] == 'object'){
                                 if(JSON.stringify(newObj[key]) != JSON.stringify(data[0].products[i][key])) {
-                                    console.log(" obj ", newObj[key], data[0].products[i][key])
+                                    data[0].products[i][key] = newObj[key]
                                 }
                             }else{
                                 if(newObj[key] != data[0].products[i][key] && typeof newObj[key] != 'undefined') {
