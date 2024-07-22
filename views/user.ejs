@@ -3,13 +3,13 @@
 Modus emotion by user :
 <ul>
 <% data.emoByName.forEach(function(item){ %>
-    <li><b><%= item._id.name %></b> <b><%= item._id.emotion %></b> se banyak : <b><%= item.count %></b> kali</li>
+    <li><b><%= item._id.name %></b> <b><%= item._id.emotion %></b> sebanyak : <b><%= item.count %></b> kali</li>
 <%})%>
 </ul>
 
 Modus emotion by user per day :
 <ul>
     <% data.emotionPerDayByName.forEach(function(item){ %>
-        <li><b><%= item._id.name %></b> <b><%= item._id.emotion %></b> se banyak  : <b><%= item.count %></b> kali pada tgl <b><%= item._id.created %></b></li>
+        <li><b><%= item._id.name %></b> <b><%= item._id.emotion %></b> sebanyak  : <b><%= item.count %></b> kali pada tgl <b><%= item._id.created %></b></li>
     <%})%>
     </ul>
