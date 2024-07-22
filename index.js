@@ -205,10 +205,96 @@ var getProduct = async (category) => {
 
                 res.status(500).json({...err});
             }
-            
         });
     
-    
+        app.get("/add", async(req,res) => {
+            var allData = await getProduct("");
+
+            res.render("add", {data:allData});
+        });
+
+        app.post('/add', async (req, res) => {
+            try {
+                var newObj = {};
+
+                for(var key in req.body) {
+                    var arr = key.split("-");
+
+                    if(arr.length == 2){
+                        if(!newObj[arr[0]]) {
+                            newObj[arr[0]] = {};
+                        }
+
+                        newObj[arr[0]][arr[1]] = (!isNaN(parseInt(req.body[key])) && key != 'created_at' && key !=  'updated_at') ? parseInt(req.body[key]) : req.body[key];
+                    }else{
+                        newObj[key] = (!isNaN(parseInt(req.body[key])) && key != 'created_at' && key !=  'updated_at') ?  parseInt(req.body[key]) : req.body[key] ;
+                    }
+                }
+
+                var query = {
+                    id:parseInt(newObj.category)
+                }
+
+
+                var data = await getProduct(query);
+                delete newObj.category;
+
+                data[0].products.push(newObj);
+                var client =  await connect.run();
+                await client.connect();
+                var db = client.db("TPGlobal");
+          
+                var dataUpdateRes  = await db.collection("products").updateOne(query, { 
+                    $set: {
+                        products: data[0].products
+                    } 
+                });
+                
+                res.status(200).json({newObj:dataUpdateRes});
+            }catch(err){
+
+                res.status(500).json({...err});
+            }
+        });
+
+        app.get('/delete/:categoryId/:productId', async (req, res) => {
+            try {
+                var query = {
+                    id:parseInt(req.params.categoryId)
+                }
+
+                var productId = req.params.productId;
+
+                var data = await getProduct(query);
+                var newProducts = []
+
+                for(let i = 0; i < data[0].products.length; i++){
+                    if(data[0].products[i].id != parseInt(productId)){
+                        newProducts.push(data[0].products[i]);
+                    }
+                    
+                }
+
+                var client =  await connect.run();
+                await client.connect();
+                var db = client.db("TPGlobal");
+          
+                var dataUpdateRes  = await db.collection("products").updateOne({
+                    id:parseInt(req.params.categoryId)
+                }, { 
+                    $set: {
+                        products:newProducts
+                    } 
+                });
+                
+                res.status(200).json({});
+            }catch(err){
+
+                res.status(500).json({...err});
+            }
+        });
+
+
         app.listen(port, () => {
             console.log(`app listening on port ${port}`)
         });

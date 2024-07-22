@@ -1,0 +1,82 @@
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <a href="/">Home</a>
+    <form id="myForm">
+        <table>
+            <tr>
+              <td>Category</td>
+              <td>
+                <select id="select" name="category">
+                <% data.forEach(function(category){ %>
+                <option value=<%= category.id %>><%= category.name %></option>
+                <% }); %></td>
+            </tr>
+            <% Object.keys(data[0].products[0]).forEach(function(propChild) { %>
+              <% if(typeof data[0].products[0][propChild] == 'object') { %>
+                  <% Object.keys(data[0].products[0][propChild]).forEach(function(prp) { %>
+                    <% if(prp != 'id') { %>
+                      <tr>
+                          <td><label> <%= propChild %> <%= prp %> </label></td>
+                          <td><input type="text" name="<%= propChild+'-'+prp %>" > </td>
+                      </tr>
+                    <% } %>
+                  <%})%>
+              <%} else{%>
+                  <% if(propChild != 'id') { %>
+                    <tr>
+                        <td><label><%= propChild %> </label></td>
+                        <td><input type="text" name="<%= propChild %>"> </td>
+                    </tr>
+                  <% } %>
+              <%}%>
+            <%})%>
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><input type="submit" value="Add"></td>
+                <td>&nbsp;</td>
+            </tr>
+        </table>
+       
+    </form>
+    <script>
+        $(document).ready(function() {
+           var arrUrl = window.location.href.split("/");
+           var categoryId = arrUrl[arrUrl.length - 2];
+           var productId = arrUrl[arrUrl.length - 1]
+
+            $('#myForm').on('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+
+              
+
+                var formData = $(this).serialize();
+                $("input").attr("disabled", true);
+                $.ajax({
+                    url: '/add/',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $("input").attr("disabled", false);
+                        alert("update berhasil");
+                    },
+                    error: function(xhr, status, error) {
+                        $("input").attr("disabled", false);
+                        alert("update error");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

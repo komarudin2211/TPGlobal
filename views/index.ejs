@@ -15,7 +15,7 @@
         <% }); %>
     </select>
     </div>
-  
+    <a href="/add">Add Data</a>
 
     <div>
         <% data.forEach(function(category){ %>
@@ -24,6 +24,7 @@
             <%= category.name %> 
             <button class="xmlBtn" onclick="downloadXmlFromUrl('<%= category.name %>')" data-name=xml-<%= category.name %>>XML</button> 
             <button class="xlsxBtn" data-name=xlsx-<%= category.name %>>XLSX</button>
+        
             <table border="1" id=<%= category.name %>>
                 <tr>
                     <td>Title</td>
@@ -36,7 +37,10 @@
                     <td><%= product.title %></td>
                     <td> <%= product.price.price %></td>
                     <td><%= product.stock.stock %></td>
-                    <td><a href="/detail/<%= category.id %>/<%= product.id %>">Edit</a></td>
+                    <td>
+                        <a href="/detail/<%= category.id %>/<%= product.id %>">Edit</a> | 
+                        <a href="#" class="delete" data-attr="<%= category.id+'/'+product.id %>">Delete</a>
+                    </td>
                    </tr>
                 <% }); %>
             </table>
@@ -94,7 +98,6 @@
             xhr.send();
         }
 
-   
         $(document).ready(function() {
             $('.xlsxBtn').click(function(e) {
                 var attr = $(e.target).attr("data-name");
@@ -105,6 +108,21 @@
                 XLSX.writeFile(wb, idTble+'.xlsx');
             });
 
+            $('.delete').click(function(e) {
+                var link = $(e.target).attr("data-attr");
+
+                $.ajax({
+                    type: 'GET',
+                    url:"/delete/"+link,
+                    success: function(response) {
+                        alert("delete data berhasil");
+                    },
+                    error: function(xhr, status, error) {
+                        $("input").attr("disabled", false);
+                        alert("delete data error");
+                    }
+                });
+            });
 
             $("#select").change(() => {
                 window.location.search = "category="+$("#select").val();
