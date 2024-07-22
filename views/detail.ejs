@@ -58,8 +58,6 @@
             $('#myForm').on('submit', function(event) {
                 event.preventDefault(); // Prevent the default form submission
 
-              
-
                 var formData = $(this).serialize();
                 $("input").attr("disabled", true);
                 $.ajax({

@@ -12,11 +12,59 @@ app.use(express.json());
 
 var reqConnet = false
 
+const fs = require('node:fs');
+const { rejects } = require("assert");
+
+
+var collUser = () => {
+    return  new Promise((resolve, reject) => {
+        var dataUser = [];
+        return fs.readFile('./data_user.txt', 'utf8', (err, data) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            var userArr = data.split("\n");
+
+            for(let i=0; i < userArr.length; i++) {
+                if(i > 0){
+                    var obj = {};
+
+                    var title = userArr[0].replace(/\r/,"").split("|");
+                    var data = userArr[i].replace(/\r/,"").split("|")
+                    for(let j=1; j < 6; j++){
+                        if(data[j]){
+                            obj[title[j].trim()] = (!isNaN(parseInt(data[j].trim())) && title[j].trim() != 'created' ) ? parseInt(data[j].trim()) : data[j].trim();
+                        }
+
+                    }
+
+                    if(Object.keys(obj).length  > 0) {
+                        dataUser.push(obj);
+                    }
+                }
+            }
+
+            resolve(dataUser)
+        });
+
+    
+    });
+}
+
 var defaultData = async () => {
+    var dataUser = await collUser();
+ 
     reqConnet = true;
    var client =  await connect.run();
     await client.connect();
     var db = client.db("TPGlobal");
+
+    var user = await db.collection("user").find({}).toArray((err, items) => items);
+
+    if(user.length == 0){
+        await db.collection("user").insertMany(dataUser);
+    }
 
     try {
         var data = await axios.get("https://portal.panelo.co/paneloresto/api/productlist/18");
@@ -238,7 +286,8 @@ var getProduct = async (category) => {
 
                 var data = await getProduct(query);
                 delete newObj.category;
-
+                var id = (data[0].products[data[0].products.length -1].id) ? parseInt(data[0].products[data[0].products.length -1].id) + 1 : data[0].products.length
+                newObj.id = id
                 data[0].products.push(newObj);
                 var client =  await connect.run();
                 await client.connect();
@@ -251,6 +300,72 @@ var getProduct = async (category) => {
                 });
                 
                 res.status(200).json({newObj:dataUpdateRes});
+            }catch(err){
+
+                res.status(500).json({...err});
+            }
+        });
+
+        app.get('/user', async (req, res) => {
+            try {
+                var client =  await connect.run();
+                await client.connect();
+                var db = client.db("TPGlobal");
+                var totalData = await db.collection('user').count();
+          
+               var score = await db.collection('user').aggregate([{
+                    $group: {
+                        "_id": {
+                            "score": "$score",
+                        },
+                        "count": {
+                            "$sum": 1
+                        },
+                        avgQuantity: { $avg: "$score" }
+                    }, 
+               }]).toArray( items => items);
+
+               var emotion = await db.collection('user').aggregate([{
+                $group: {
+                    "_id": {
+                        "name": "$name",
+                        "emotion": "$emotion",
+                    },
+                    "count": {
+                        "$sum": 1
+                    }
+                }, 
+                }]).toArray( items => items);
+                var emotion2 = await db.collection('user').aggregate([{
+                    $group: {
+                        "_id": {
+                            "name": "$name",
+                            "emotion": "$emotion",
+                            "created":"$created"
+                        },
+                        "count": {
+                            "$sum": 1
+                        }
+                    }, 
+                    }]).toArray( items => items);
+
+                var total = await db.collection('user').aggregate([
+                    {
+                      $group: {
+                        _id:'',
+                        score: { $sum: "$score"},
+                      }
+                    }
+                 ]).toArray( items => items);
+
+                 var data = {
+                    emoByName:emotion,
+                    avgScore : total[0].score / totalData,
+                    emotionPerDayByName:emotion2
+                 }
+               
+                
+                res.render("user", {data:data});
             }catch(err){
 
                 res.status(500).json({...err});
@@ -293,7 +408,6 @@ var getProduct = async (category) => {
                 res.status(500).json({...err});
             }
         });
-
 
         app.listen(port, () => {
             console.log(`app listening on port ${port}`)

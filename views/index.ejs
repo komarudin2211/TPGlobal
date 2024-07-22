@@ -15,7 +15,7 @@
         <% }); %>
     </select>
     </div>
-    <a href="/add">Add Data</a>
+    <a href="/add">Add Data Product</a>
 
     <div>
         <% data.forEach(function(category){ %>
@@ -54,6 +54,9 @@
 
     <div style="margin-top: 20px;" >Data Kosong</div>
     <% } %>
+
+    <div><a href="/user">Lihat data user</a></div>
+
     <script>
         function downloadXmlFromUrl(category) {
             const url = '/xml?category='+category;
@@ -103,22 +106,29 @@
                 var attr = $(e.target).attr("data-name");
                 var arr = attr.split("-");
                 var idTble = arr[1]
-                console.log("eattar => ", arr[1]);
+
                 var wb = XLSX.utils.table_to_book(document.getElementById(idTble));
                 XLSX.writeFile(wb, idTble+'.xlsx');
             });
 
             $('.delete').click(function(e) {
+                e.preventDefault();
+
                 var link = $(e.target).attr("data-attr");
+
+                $(e.target).text("loading...");
 
                 $.ajax({
                     type: 'GET',
                     url:"/delete/"+link,
                     success: function(response) {
                         alert("delete data berhasil");
+                        $(e.target).text("Delete");
+                        window.location.reload();
                     },
                     error: function(xhr, status, error) {
                         $("input").attr("disabled", false);
+                        $(e.target).text("Delete");
                         alert("delete data error");
                     }
                 });
